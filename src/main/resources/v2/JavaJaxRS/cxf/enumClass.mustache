@@ -13,6 +13,7 @@ public enum {{datatypeWithEnum}} {
         value = v;
     }
 
+    @com.fasterxml.jackson.annotation.JsonValue
     public {{datatype}} value() {
         return value;
     }
@@ -22,6 +23,7 @@ public enum {{datatypeWithEnum}} {
         return String.valueOf(value);
     }
 
+    @com.fasterxml.jackson.annotation.JsonCreator
     public static {{datatypeWithEnum}} fromValue(String v) {
         for ({{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{{classname}}}{{/datatypeWithEnum}} b : {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{{classname}}}{{/datatypeWithEnum}}.values()) {
             if (String.valueOf(b.value).equals(v)) {

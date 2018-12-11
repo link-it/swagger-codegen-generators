@@ -18,7 +18,11 @@ import org.apache.cxf.jaxrs.ext.multipart.*;
 {{#useSpringAnnotationConfig}}
 import org.springframework.stereotype.Service;
 {{/useSpringAnnotationConfig}}
-
+import org.openspcoop2.utils.jaxrs.impl.AuthorizationManager;
+import org.openspcoop2.utils.jaxrs.impl.BaseImpl;
+import org.openspcoop2.utils.jaxrs.impl.ServiceContext;
+import org.openspcoop2.utils.jaxrs.impl.AuthorizationConfig;
+import org.openspcoop2.utils.jaxrs.fault.FaultCode;
 {{#useSpringAnnotationConfig}}
 @Service("{{classname}}")
 {{/useSpringAnnotationConfig}}
@@ -34,7 +38,17 @@ import org.springframework.stereotype.Service;
  *
  */
 {{/appName}}
-public class {{classname}}ServiceImpl implements {{classname}} {
+public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} {
+
+	public {{classname}}ServiceImpl(){
+		super(org.slf4j.LoggerFactory.getLogger({{classname}}ServiceImpl.class));
+	}
+
+	private AuthorizationConfig getAuthorizationConfig() throws Exception{
+		// TODO: Implement ...
+		throw new Exception("NotImplemented");
+	}
+
 {{#operations}}
 {{#operation}}
     {{#summary}}
@@ -47,10 +61,29 @@ public class {{classname}}ServiceImpl implements {{classname}} {
      {{/notes}}
      */
     {{/summary}}
+	@Override
     public {{>returnTypes}} {{nickname}}({{#allParams}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{#has this 'more'}}, {{/has}}{{/allParams}}) {
+		ServiceContext context = this.getContext();
+		try {
+			context.getLogger().info("Invocazione in corso ...");     
+
+			AuthorizationManager.authorize(context, getAuthorizationConfig());
+			context.getLogger().debug("Autorizzazione completata con successo");     
+                        
         // TODO: Implement...
         
+			context.getLogger().info("Invocazione completata con successo");
         {{#useGenericResponse}}return Response.ok().entity("magic!").build();{{/useGenericResponse}}{{^useGenericResponse}}{{^vendorExtensions.x-java-is-response-void}}return null;{{/vendorExtensions.x-java-is-response-void}}{{/useGenericResponse}}
+     
+		}
+		catch(javax.ws.rs.WebApplicationException e) {
+			context.getLogger().error("Invocazione terminata con errore '4xx': %s",e, e.getMessage());
+			throw e;
+		}
+		catch(Throwable e) {
+			context.getLogger().error("Invocazione terminata con errore: %s",e, e.getMessage());
+			throw FaultCode.ERRORE_INTERNO.toException(e);
+		}
     }
     
 {{/operation}}
