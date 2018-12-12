@@ -63,6 +63,11 @@ public class StaticDocCodegen extends DefaultCodegenConfig implements CodegenCon
     }
 
     @Override
+    public String getDefaultTemplateDir() {
+        return "swagger-static";
+    }
+
+    @Override
     public String getName() {
         return "dynamic-html";
     }
@@ -76,13 +81,7 @@ public class StaticDocCodegen extends DefaultCodegenConfig implements CodegenCon
     public void processOpts() {
         super.processOpts();
 
-        String templateVersion = getTemplateVersion();
-        if (StringUtils.isNotBlank(templateVersion)) {
-            embeddedTemplateDir = templateDir = String.format("%s/swagger-static", templateVersion);
-        }
-        else {
-            embeddedTemplateDir = templateDir = String.format("%s/swagger-static", DEFAULT_TEMPLATE_VERSION);
-        }
+        embeddedTemplateDir = templateDir = getTemplateDir();
     }
 
     @Override

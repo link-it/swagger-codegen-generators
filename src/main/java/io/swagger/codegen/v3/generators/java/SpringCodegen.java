@@ -157,7 +157,7 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
         super.processOpts();
 
         if (StringUtils.isBlank(templateDir)) {
-            embeddedTemplateDir = templateDir = "mustache" + File.separator + "JavaSpring";
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
 
         // clear model and api doc template as this codegen
@@ -165,8 +165,6 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
         //TODO: add doc templates
         modelDocTemplateFiles.remove("model_doc.mustache");
         apiDocTemplateFiles.remove("api_doc.mustache");
-
-        apiTestTemplateFiles.clear(); // TODO: add test template
 
         if (additionalProperties.containsKey(TITLE)) {
             this.setTitle((String) additionalProperties.get(TITLE));
@@ -278,6 +276,8 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
                         (sourceFolder + File.separator + configPackage).replace(".", java.io.File.separator), "ApiKeyRequestInterceptor.java"));
                 supportingFiles.add(new SupportingFile("clientConfiguration.mustache",
                         (sourceFolder + File.separator + configPackage).replace(".", java.io.File.separator), "ClientConfiguration.java"));
+                supportingFiles.add(new SupportingFile("Application.mustache",
+                        (testFolder + File.separator + basePackage).replace(".", java.io.File.separator), "Application.java"));
                 apiTemplateFiles.put("apiClient.mustache", "Client.java");
                 if (!additionalProperties.containsKey(SINGLE_CONTENT_TYPES)) {
                     additionalProperties.put(SINGLE_CONTENT_TYPES, "true");
@@ -403,6 +403,11 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
     @Override
     public String getArgumentsLocation() {
         return null;
+    }
+
+    @Override
+    public String getDefaultTemplateDir() {
+        return "JavaSpring";
     }
 
     @Override
@@ -585,13 +590,24 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
     }
 
     @Override
+    public String toApiTestFilename(String name) {
+        if(library.equals(SPRING_MVC_LIBRARY)) {
+            return toApiName(name) + "ControllerIT";
+        }
+        if(library.equals(SPRING_CLOUD_LIBRARY)) {
+            return toApiName(name) + "Test";
+        }
+        return toApiName(name) + "ControllerIntegrationTest";
+    }
+
+    @Override
     public void setParameterExampleValue(CodegenParameter p) {
         String type = p.baseType;
         if (type == null) {
             type = p.dataType;
         }
 
-        if ("File".equals(type)) {
+        if ("File".equalsIgnoreCase(type)) {
             String example;
 
             if (p.defaultValue == null) {
@@ -716,5 +732,11 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
     @Override
     public void setUseOptional(boolean useOptional) {
         this.useOptional = useOptional;
+    }
+
+    // todo: remove this once handlebar templates for this generator are implemented
+    @Override
+    protected void setTemplateEngine() {
+        templateEngine = new MustacheTemplateEngine(this);
     }
 }

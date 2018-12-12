@@ -68,11 +68,7 @@ public class JavaCXFClientCodegen extends AbstractJavaCodegen implements BeanVal
         super.processOpts();
 
         if (StringUtils.isBlank(templateDir)) {
-            if (StringUtils.isNotBlank(templateVersion)) {
-                embeddedTemplateDir = templateDir = String.format("%s/" + JAXRS_TEMPLATE_DIRECTORY_NAME + "/cxf", templateVersion);
-            } else {
-                embeddedTemplateDir = templateDir = String.format("%s/" + JAXRS_TEMPLATE_DIRECTORY_NAME + "/cxf", DEFAULT_TEMPLATE_VERSION);
-            }
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
 
         // clear model and api doc template as this codegen
@@ -164,5 +160,10 @@ public class JavaCXFClientCodegen extends AbstractJavaCodegen implements BeanVal
     @Override
     public String getArgumentsLocation() {
         return "";
+    }
+
+    @Override
+    public String getDefaultTemplateDir() {
+        return JAXRS_TEMPLATE_DIRECTORY_NAME + "/cxf";
     }
 }

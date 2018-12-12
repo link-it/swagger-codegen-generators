@@ -58,7 +58,6 @@ public class KotlinServerCodegen extends AbstractKotlinCodegen {
         outputFolder = "generated-code" + File.separator + "kotlin-server";
         modelTemplateFiles.put("model.mustache", ".kt");
         apiTemplateFiles.put("api.mustache", ".kt");
-        embeddedTemplateDir = templateDir = "kotlin-server";
         apiPackage = packageName + ".apis";
         modelPackage = packageName + ".models";
 
@@ -163,11 +162,8 @@ public class KotlinServerCodegen extends AbstractKotlinCodegen {
     public void processOpts() {
         super.processOpts();
 
-        String templateVersion = getTemplateVersion();
-        if (StringUtils.isNotBlank(templateVersion)) {
-            embeddedTemplateDir = templateDir = String.format("%s/kotlin-server", templateVersion);
-        } else {
-            embeddedTemplateDir = templateDir = String.format("%s/kotlin-server", DEFAULT_TEMPLATE_VERSION);
+        if (StringUtils.isBlank(templateDir)) {
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
 
         if (!additionalProperties.containsKey(GENERATE_APIS)) {
@@ -240,6 +236,11 @@ public class KotlinServerCodegen extends AbstractKotlinCodegen {
     public void addHandlebarHelpers(Handlebars handlebars) {
         super.addHandlebarHelpers(handlebars);
         handlebars.registerHelpers(StringHelpers.class);
+    }
+
+    @Override
+    public String getDefaultTemplateDir() {
+        return "kotlin-server";
     }
 
     public static class Constants {

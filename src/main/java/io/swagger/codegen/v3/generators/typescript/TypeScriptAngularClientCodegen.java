@@ -79,12 +79,8 @@ public class TypeScriptAngularClientCodegen extends AbstractTypeScriptClientCode
         super.processOpts();
 
         if (StringUtils.isBlank(templateDir)) {
-            String templateVersion = getTemplateVersion();
-            if (StringUtils.isNotBlank(templateVersion)) {
-                embeddedTemplateDir = templateDir = String.format("%s" + File.separator + "typescript-angular", templateVersion);
-            } else {
-                embeddedTemplateDir = templateDir = String.format("%s" + File.separator + "typescript-angular", DEFAULT_TEMPLATE_VERSION);
-            }
+            embeddedTemplateDir = templateDir = String.format("%s" + File.separator + "typescript-angular", DEFAULT_TEMPLATE_DIR);
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
 
         modelTemplateFiles.put("model.mustache", ".ts");
@@ -175,6 +171,11 @@ public class TypeScriptAngularClientCodegen extends AbstractTypeScriptClientCode
     @Override
     public String getArgumentsLocation() {
         return null;
+    }
+
+    @Override
+    public String getDefaultTemplateDir() {
+        return "typescript-angular";
     }
 
     @Override
