@@ -14,8 +14,38 @@
     <artifactId>swagger-codegen-generators</artifactId>
     <version>1.0.0-gov4j-1</version>
     <packaging>jar</packaging>
+        <distributionManagement>
+                <repository>
+                        <id>link-repository</id>
+                        <name>Linkit Public Repository</name>
+                        <url>scpexe://maven.openspcoop.org/var/maven2/repositories/public/</url>
+                </repository>
+                <snapshotRepository>
+                        <id>link-repository</id>
+                        <name>Linkit Snapshots Repository</name>
+                        <url>scpexe://maven.openspcoop.org/var/maven2/repositories/snapshots/</url>
+                </snapshotRepository>
+        </distributionManagement>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>org.jvnet.wagon-svn</groupId>
+                <artifactId>wagon-svn</artifactId>
+                <version>1.8</version>
+            </extension>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>1.0-alpha-6</version>
+            </extension>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-webdav</artifactId>
+                <version>1.0-beta-1</version>
+            </extension>
+        </extensions>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
