@@ -45,7 +45,6 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
         apiTemplateFiles.put("api.mustache", ".kt");
         modelDocTemplateFiles.put("model_doc.mustache", ".md");
         apiDocTemplateFiles.put("api_doc.mustache", ".md");
-        embeddedTemplateDir = templateDir = "kotlin-client";
         apiPackage = packageName + ".apis";
         modelPackage = packageName + ".models";
 
@@ -56,6 +55,11 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
         dateOptions.put(DateLibrary.JAVA8.value, "Java 8 native JSR310");
         dateLibrary.setEnum(dateOptions);
         cliOptions.add(dateLibrary);
+    }
+
+    @Override
+    public String getDefaultTemplateDir() {
+        return "kotlin-client";
     }
 
     public CodegenType getTag() {
@@ -78,11 +82,8 @@ public class KotlinClientCodegen extends AbstractKotlinCodegen {
     public void processOpts() {
         super.processOpts();        
 
-        String templateVersion = getTemplateVersion();
-        if (StringUtils.isNotBlank(templateVersion)) {
-            embeddedTemplateDir = templateDir = String.format("%s/kotlin-client", templateVersion);
-        } else {
-            embeddedTemplateDir = templateDir = String.format("%s/kotlin-client", DEFAULT_TEMPLATE_VERSION);
+        if (StringUtils.isBlank(templateDir)) {
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
 
         if (additionalProperties.containsKey(DATE_LIBRARY)) {

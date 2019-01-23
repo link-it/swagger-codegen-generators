@@ -4,6 +4,7 @@ import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
 import io.swagger.codegen.v3.CliOption;
 import io.swagger.codegen.v3.CodegenConstants;
+import io.swagger.codegen.v3.CodegenContent;
 import io.swagger.codegen.v3.CodegenModel;
 import io.swagger.codegen.v3.CodegenOperation;
 import io.swagger.codegen.v3.CodegenParameter;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 import static io.swagger.codegen.v3.CodegenConstants.HAS_ENUMS_EXT_NAME;
 import static io.swagger.codegen.v3.CodegenConstants.IS_ENUM_EXT_NAME;
@@ -157,7 +159,7 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
         super.processOpts();
 
         if (StringUtils.isBlank(templateDir)) {
-            embeddedTemplateDir = templateDir = "mustache" + File.separator + "JavaSpring";
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
 
         // clear model and api doc template as this codegen
@@ -165,8 +167,6 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
         //TODO: add doc templates
         modelDocTemplateFiles.remove("model_doc.mustache");
         apiDocTemplateFiles.remove("api_doc.mustache");
-
-        apiTestTemplateFiles.clear(); // TODO: add test template
 
         if (additionalProperties.containsKey(TITLE)) {
             this.setTitle((String) additionalProperties.get(TITLE));
@@ -278,6 +278,8 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
                         (sourceFolder + File.separator + configPackage).replace(".", java.io.File.separator), "ApiKeyRequestInterceptor.java"));
                 supportingFiles.add(new SupportingFile("clientConfiguration.mustache",
                         (sourceFolder + File.separator + configPackage).replace(".", java.io.File.separator), "ClientConfiguration.java"));
+                supportingFiles.add(new SupportingFile("Application.mustache",
+                        (testFolder + File.separator + basePackage).replace(".", java.io.File.separator), "Application.java"));
                 apiTemplateFiles.put("apiClient.mustache", "Client.java");
                 if (!additionalProperties.containsKey(SINGLE_CONTENT_TYPES)) {
                     additionalProperties.put(SINGLE_CONTENT_TYPES, "true");
@@ -406,6 +408,11 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
     }
 
     @Override
+    public String getDefaultTemplateDir() {
+        return "JavaSpring";
+    }
+
+    @Override
     public void preprocessOpenAPI(OpenAPI openAPI) {
         super.preprocessOpenAPI(openAPI);
 
@@ -500,6 +507,7 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
 
                 if(implicitHeaders){
                     removeHeadersFromAllParams(operation.allParams);
+                    removeHeadersFromContents(operation.contents);
                 }
             }
         }
@@ -562,6 +570,25 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
         allParams.get(allParams.size()-1).getVendorExtensions().put(CodegenConstants.HAS_MORE_EXT_NAME, Boolean.FALSE);
     }
 
+    private void removeHeadersFromContents(List<CodegenContent> contents) {
+        if(contents == null || contents.isEmpty()){
+            return;
+        }
+        for(int index = 0; index < contents.size(); index++) {
+            final CodegenContent codegenContent = contents.get(index);
+            final List<CodegenParameter> parameters = codegenContent.getParameters();
+            if (parameters == null || parameters.isEmpty()) {
+                continue;
+            }
+            final List<CodegenParameter> filteredParameters = parameters.stream()
+                    .filter(codegenParameter -> !getBooleanValue(codegenParameter, CodegenConstants.IS_HEADER_PARAM_EXT_NAME))
+                    .collect(Collectors.toList());
+            parameters.clear();
+            parameters.addAll(filteredParameters);
+            parameters.get(parameters.size()-1).getVendorExtensions().put(CodegenConstants.HAS_MORE_EXT_NAME, Boolean.FALSE);
+        }
+    }
+
     @Override
     public Map<String, Object> postProcessSupportingFileData(Map<String, Object> objs) {
         if(library.equals(SPRING_CLOUD_LIBRARY)) {
@@ -585,13 +612,24 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
     }
 
     @Override
+    public String toApiTestFilename(String name) {
+        if(library.equals(SPRING_MVC_LIBRARY)) {
+            return toApiName(name) + "ControllerIT";
+        }
+        if(library.equals(SPRING_CLOUD_LIBRARY)) {
+            return toApiName(name) + "Test";
+        }
+        return toApiName(name) + "ControllerIntegrationTest";
+    }
+
+    @Override
     public void setParameterExampleValue(CodegenParameter p) {
         String type = p.baseType;
         if (type == null) {
             type = p.dataType;
         }
 
-        if ("File".equals(type)) {
+        if ("File".equalsIgnoreCase(type)) {
             String example;
 
             if (p.defaultValue == null) {
@@ -612,11 +650,6 @@ public class SpringCodegen extends AbstractJavaCodegen implements BeanValidation
 
     public String toBooleanGetter(String name) {
         return getterAndSetterCapitalize(name);
-    }
-
-    @Override
-    public TemplateEngine getTemplateEngine() {
-        return new MustacheTemplateEngine(this);
     }
 
     public void setTitle(String title) {

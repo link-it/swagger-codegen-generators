@@ -120,6 +120,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
         instantiationTypes.put("map", "HashMap");
         typeMapping.put("date", "Date");
         typeMapping.put("file", "File");
+        typeMapping.put("binary", "File");
 
         cliOptions.add(new CliOption(CodegenConstants.MODEL_PACKAGE, CodegenConstants.MODEL_PACKAGE_DESC));
         cliOptions.add(new CliOption(CodegenConstants.API_PACKAGE, CodegenConstants.API_PACKAGE_DESC));
@@ -762,6 +763,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
             if (example == null) {
                 example = p.paramName + "_example";
             }
+            p.testExample = example;
             example = "\"" + escapeText(example) + "\"";
         } else if ("Integer".equals(type) || "Short".equals(type)) {
             if (example == null) {
@@ -771,14 +773,17 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
             if (example == null) {
                 example = "56";
             }
+            p.testExample = example;
             example = example + "L";
         } else if ("Float".equals(type)) {
             if (example == null) {
                 example = "3.4";
             }
+            p.testExample = example;
             example = example + "F";
         } else if ("Double".equals(type)) {
             example = "3.4";
+            p.testExample = example;
             example = example + "D";
         } else if ("Boolean".equals(type)) {
             if (example == null) {
@@ -794,6 +799,10 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
         } else if (!languageSpecificPrimitives.contains(type)) {
             // type is a model class, e.g. User
             example = "new " + type + "()";
+        }
+
+        if (p.testExample == null) {
+            p.testExample = example;
         }
 
         if (example == null) {
@@ -954,6 +963,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
 
     @Override
     public void preprocessOpenAPI(OpenAPI openAPI) {
+        super.preprocessOpenAPI(openAPI);
         if (openAPI == null || openAPI.getPaths() == null){
             return;
         }

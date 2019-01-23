@@ -1,7 +1,6 @@
 package io.swagger.codegen.v3.generators.html;
 
 import io.swagger.codegen.v3.CliOption;
-import io.swagger.codegen.v3.CodegenConfig;
 import io.swagger.codegen.v3.CodegenConstants;
 import io.swagger.codegen.v3.CodegenModel;
 import io.swagger.codegen.v3.CodegenOperation;
@@ -18,12 +17,13 @@ import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class StaticHtmlCodegen extends DefaultCodegenConfig implements CodegenConfig {
+public class StaticHtmlCodegen extends DefaultCodegenConfig {
     protected String invokerPackage = "io.swagger.client";
     protected String groupId = "io.swagger";
     protected String artifactId = "swagger-client";
@@ -85,6 +85,11 @@ public class StaticHtmlCodegen extends DefaultCodegenConfig implements CodegenCo
     }
 
     @Override
+    public String getDefaultTemplateDir() {
+        return "htmlDocs";
+    }
+
+    @Override
     public String getName() {
         return "html";
     }
@@ -125,13 +130,8 @@ public class StaticHtmlCodegen extends DefaultCodegenConfig implements CodegenCo
     @Override
     public void processOpts() {
         super.processOpts();
-
-        String templateVersion = getTemplateVersion();
-        if (StringUtils.isNotBlank(templateVersion)) {
-            embeddedTemplateDir = templateDir = String.format("%s/htmlDocs", templateVersion);
-        }
-        else {
-            embeddedTemplateDir = templateDir = String.format("%s/htmlDocs", DEFAULT_TEMPLATE_VERSION);
+        if (StringUtils.isBlank(templateDir)) {
+            embeddedTemplateDir = templateDir = getTemplateDir();
         }
     }
 
@@ -171,6 +171,7 @@ public class StaticHtmlCodegen extends DefaultCodegenConfig implements CodegenCo
     }
 
     public void preprocessOpenAPI(OpenAPI openAPI) {
+        super.preprocessOpenAPI(openAPI);
         Info info = openAPI.getInfo();
         info.setDescription(toHtml(info.getDescription()));
         info.setTitle(toHtml(info.getTitle()));
