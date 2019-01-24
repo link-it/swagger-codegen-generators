@@ -1228,6 +1228,23 @@ public abstract class DefaultCodegenConfig implements CodegenConfig {
         codegenModel.description = escapeText(schema.getDescription());
         codegenModel.unescapedDescription = schema.getDescription();
         codegenModel.classname = toModelName(name);
+
+	if("Problem".equals(codegenModel.classname)){
+		codegenModel.getVendorExtensions().put("x-java-is-problem", Boolean.TRUE);
+		codegenModel.getVendorExtensions().put("x-java-problem-parent", "org.openspcoop2.utils.service.fault.jaxrs.Problem");
+		codegenModel.getVendorExtensions().put("x-java-is-problem-primitive-type", Boolean.TRUE);
+	}
+	else if("ProblemValidation".equals(codegenModel.classname)){
+		codegenModel.getVendorExtensions().put("x-java-is-problem", Boolean.TRUE);
+		codegenModel.getVendorExtensions().put("x-java-problem-parent", "org.openspcoop2.utils.service.fault.jaxrs.ProblemValidation");
+		codegenModel.getVendorExtensions().put("x-java-is-problem-primitive-type", Boolean.TRUE);
+	}
+	else if(codegenModel.classname!=null && codegenModel.classname.startsWith("Problem")){
+		codegenModel.getVendorExtensions().put("x-java-is-problem", Boolean.TRUE);
+		codegenModel.getVendorExtensions().put("x-java-problem-parent", "org.openspcoop2.utils.service.fault.jaxrs.Problem");
+		codegenModel.getVendorExtensions().put("x-java-is-problem-primitive-type", Boolean.FALSE);
+	}
+
         codegenModel.classVarName = toVarName(name);
         codegenModel.classFilename = toModelFilename(name);
         codegenModel.modelJson = Json.pretty(schema);
