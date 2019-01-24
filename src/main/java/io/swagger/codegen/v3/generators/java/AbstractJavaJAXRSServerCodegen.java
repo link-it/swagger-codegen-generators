@@ -182,6 +182,11 @@ public abstract class AbstractJavaJAXRSServerCodegen extends AbstractJavaCodegen
                             // set vendorExtensions.x-java-is-response-void to true as baseType is set to "Void"
                             resp.vendorExtensions.put("x-java-is-response-void", true);
                         }
+			else {
+				if("File".equals(resp.baseType)){
+					resp.vendorExtensions.put("x-java-is-response-file", Boolean.TRUE);
+				}
+			}
 
                         if ("array".equals(resp.containerType)) {
                             resp.containerType = "List";
@@ -197,6 +202,11 @@ public abstract class AbstractJavaJAXRSServerCodegen extends AbstractJavaCodegen
                     // set vendorExtensions.x-java-is-response-void to true as returnBaseType is set to "Void"
                     operation.vendorExtensions.put("x-java-is-response-void", true);
                 }
+		else {
+			if("File".equals(operation.returnBaseType)){
+				operation.vendorExtensions.put("x-java-is-response-file", Boolean.TRUE);
+			}
+		}
 
                 if ("array".equals(operation.returnContainer)) {
                     operation.returnContainer = "List";

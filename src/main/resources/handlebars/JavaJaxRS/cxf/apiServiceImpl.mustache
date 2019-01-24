@@ -18,11 +18,11 @@ import org.apache.cxf.jaxrs.ext.multipart.*;
 {{#useSpringAnnotationConfig}}
 import org.springframework.stereotype.Service;
 {{/useSpringAnnotationConfig}}
-import org.openspcoop2.utils.jaxrs.impl.AuthorizationManager;
-import org.openspcoop2.utils.jaxrs.impl.BaseImpl;
-import org.openspcoop2.utils.jaxrs.impl.ServiceContext;
-import org.openspcoop2.utils.jaxrs.impl.AuthorizationConfig;
-import org.openspcoop2.utils.jaxrs.fault.FaultCode;
+import org.openspcoop2.utils.service.authorization.AuthorizationManager;
+import org.openspcoop2.utils.service.authorization.AuthorizationConfig;
+import org.openspcoop2.utils.service.BaseImpl;
+import org.openspcoop2.utils.service.context.IContext;
+import org.openspcoop2.utils.service.fault.jaxrs.FaultCode;
 {{#useSpringAnnotationConfig}}
 @Service("{{classname}}")
 {{/useSpringAnnotationConfig}}
@@ -62,8 +62,8 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
      */
     {{/summary}}
 	@Override
-    public {{>returnTypes}} {{nickname}}({{#allParams}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{#has this 'more'}}, {{/has}}{{/allParams}}) {
-		ServiceContext context = this.getContext();
+    public {{#vendorExtensions.x-java-is-response-file}}byte[]{{/vendorExtensions.x-java-is-response-file}}{{^vendorExtensions.x-java-is-response-file}}{{>returnTypes}}{{/vendorExtensions.x-java-is-response-file}} {{nickname}}({{#allParams}}{{#secondaryParam}}, {{/secondaryParam}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{/allParams}}) {
+		IContext context = this.getContext();
 		try {
 			context.getLogger().info("Invocazione in corso ...");     
 

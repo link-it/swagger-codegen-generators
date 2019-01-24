@@ -82,7 +82,7 @@ public interface {{classname}}  {
     @ApiResponses(value = { {{#responses}}
         @ApiResponse(responseCode = "{{{code}}}", description = "{{{message}}}"{{^vendorExtensions.x-java-is-response-void}}, content = @Content({{^containerType}}schema = @Schema(implementation = {{{baseType}}}.class)){{/containerType}}{{#containerType}}array = @ArraySchema(schema = @Schema(implementation = {{{baseType}}}.class))){{/containerType}}{{/vendorExtensions.x-java-is-response-void}}){{#has this 'more'}},{{/has}}{{/responses}} })
     {{/useOas2}}
-    public {{>returnTypes}} {{nickname}}({{#allParams}}{{>queryParams}}{{>pathParams}}{{>headerParams}}{{>bodyParams}}{{>formParams}}{{#has this 'more'}}, {{/has}}{{/allParams}});
+    public {{#vendorExtensions.x-java-is-response-file}}byte[]{{/vendorExtensions.x-java-is-response-file}}{{^vendorExtensions.x-java-is-response-file}}{{>returnTypes}}{{/vendorExtensions.x-java-is-response-file}} {{nickname}}({{#allParams}}{{#secondaryParam}}, {{/secondaryParam}}{{>queryParams}}{{>pathParams}}{{>headerParams}}{{>bodyParams}}{{>formParams}}{{/allParams}});
 {{/operation}}
 }
 {{/operations}}
