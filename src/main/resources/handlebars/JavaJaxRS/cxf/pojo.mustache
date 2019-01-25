@@ -78,7 +78,7 @@ public class {{classname}} {{#vendorExtensions.x-java-is-problem}}extends {{{ven
     if ({{name}} == null) {
       return null;
     }
-    return {{name}}.value();
+    return {{name}}.getValue();
   }{{/isNot}}{{/isNot}}{{/is}}{{#is this 'enum'}}{{#is this 'list-container'}}public {{{datatypeWithEnum}}} {{getter}}() {
     return {{name}};
   }{{/is}}{{/is}}{{#is this 'enum'}}{{#is this 'map-container'}}public {{{datatypeWithEnum}}} {{getter}}() {

@@ -2169,14 +2169,14 @@ public abstract class DefaultCodegenConfig implements CodegenConfig {
             });
         }
 
-        codegenOperation.allParams = addHasMore(allParams);
-        codegenOperation.bodyParams = addHasMore(bodyParams);
-        codegenOperation.pathParams = addHasMore(pathParams);
-        codegenOperation.queryParams = addHasMore(queryParams);
-        codegenOperation.headerParams = addHasMore(headerParams);
+        codegenOperation.allParams = addHasMore(allParams, true, operationId);
+        codegenOperation.bodyParams = addHasMore(bodyParams, false, operationId);
+        codegenOperation.pathParams = addHasMore(pathParams, false, operationId);
+        codegenOperation.queryParams = addHasMore(queryParams, false, operationId);
+        codegenOperation.headerParams = addHasMore(headerParams, false, operationId);
         // op.cookieParams = cookieParams;
-        codegenOperation.formParams = addHasMore(formParams);
-        codegenOperation.requiredParams = addHasMore(requiredParams);
+        codegenOperation.formParams = addHasMore(formParams, false, operationId);
+        codegenOperation.requiredParams = addHasMore(requiredParams, false, operationId);
         codegenOperation.externalDocs = operation.getExternalDocs();
 
         configuresParameterForMediaType(codegenOperation, codegenContents);
@@ -2794,11 +2794,20 @@ public abstract class DefaultCodegenConfig implements CodegenConfig {
         }
     }
 
-    private static List<CodegenParameter> addHasMore(List<CodegenParameter> objs) {
+    private static List<CodegenParameter> addHasMore(List<CodegenParameter> objs, boolean setHasMoreParameter, String operationId) {
         if (objs != null) {
             for (int i = 0; i < objs.size(); i++) {
                 objs.get(i).secondaryParam = i > 0;
                 objs.get(i).getVendorExtensions().put(CodegenConstants.HAS_MORE_EXT_NAME, i < objs.size() - 1);
+		//System.out.println("PRIMO METODO ["+operationId+"] ["+objs.get(i).paramName+"]=["+valore+"]");
+		if(setHasMoreParameter){
+			//System.out.println("\tSI");
+			boolean valore = i < objs.size() - 1;
+			objs.get(i).getVendorExtensions().put("x-has-more-parameter", valore);
+		}
+		else{
+			//System.out.println("\tNO");
+		}
             }
         }
         return objs;
@@ -4035,7 +4044,7 @@ public abstract class DefaultCodegenConfig implements CodegenConfig {
                     }
                 }
             );
-            addHasMore(content.getParameters());
+            addHasMore(content.getParameters(), false, codegenOperation.operationId);
         }
         codegenOperation.getContents().addAll(codegenContents);
     }

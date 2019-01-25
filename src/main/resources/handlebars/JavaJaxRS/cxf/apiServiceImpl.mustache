@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.model.wadl.Description;
-import org.apache.cxf.jaxrs.model.wadl.DocTarget;
+//import org.apache.cxf.jaxrs.model.wadl.Description;
+//import org.apache.cxf.jaxrs.model.wadl.DocTarget;
 
 import org.apache.cxf.jaxrs.ext.multipart.*;
 
@@ -62,7 +62,7 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
      */
     {{/summary}}
 	@Override
-    public {{#vendorExtensions.x-java-is-response-file}}byte[]{{/vendorExtensions.x-java-is-response-file}}{{^vendorExtensions.x-java-is-response-file}}{{>returnTypes}}{{/vendorExtensions.x-java-is-response-file}} {{nickname}}({{#allParams}}{{#secondaryParam}}, {{/secondaryParam}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{/allParams}}) {
+    public {{#vendorExtensions.x-java-is-response-file}}byte[]{{/vendorExtensions.x-java-is-response-file}}{{^vendorExtensions.x-java-is-response-file}}{{>returnTypes}}{{/vendorExtensions.x-java-is-response-file}} {{nickname}}({{#allParams}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{#vendorExtensions.x-has-more-parameter}}, {{/vendorExtensions.x-has-more-parameter}}{{/allParams}}) {
 		IContext context = this.getContext();
 		try {
 			context.getLogger().info("Invocazione in corso ...");     
