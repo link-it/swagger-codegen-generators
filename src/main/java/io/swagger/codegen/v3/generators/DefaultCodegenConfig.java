@@ -1373,6 +1373,31 @@ public abstract class DefaultCodegenConfig implements CodegenConfig {
 
         if (codegenModel.vars != null) {
             for(CodegenProperty prop : codegenModel.vars) {
+
+		String specialKeyword = null;
+		if(prop.title!=null && prop.title.startsWith("x-gov4j-commons-") && prop.title.contains("#")){
+			specialKeyword = prop.title;		
+		}
+		else if(prop.description!=null && prop.description.startsWith("x-gov4j-commons-") && prop.description.contains("#")){
+			specialKeyword = prop.description;	
+		}
+
+		if(specialKeyword!=null){
+
+			/*
+				NOTA: il title viene controllato prima della description.
+				Example:
+					title: x-gov4j-commons-json-deserializer#org.openspcoop2.example.Deserializer
+					or
+			         	description: x-gov4j-commons-json-deserializer#org.openspcoop2.example.Deserializer
+			*/
+
+			String key = specialKeyword.substring(0,specialKeyword.indexOf("#"));
+			String value = specialKeyword.substring(specialKeyword.indexOf("#")+1,specialKeyword.length());
+			prop.vendorExtensions.put(key, true);
+			prop.vendorExtensions.put(key+"-value", value);
+		}
+
                 postProcessModelProperty(codegenModel, prop);
             }
         }

@@ -1,5 +1,6 @@
 {{#required}}
   @NotNull
 {{/required}}
-  @Valid
+  @Valid{{#vendorExtensions.x-gov4j-commons-json-deserializer}}
+  @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = {{{vendorExtensions.x-gov4j-commons-json-deserializer-value}}}.class){{/vendorExtensions.x-gov4j-commons-json-deserializer}}
 {{>beanValidationCore}}
