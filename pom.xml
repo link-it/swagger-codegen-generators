@@ -18,12 +18,12 @@
                 <repository>
                         <id>link-repository</id>
                         <name>Linkit Public Repository</name>
-                        <url>scpexe://maven.openspcoop.org/var/maven2/repositories/public/</url>
+                        <url>scpexe://poli-dev.link.it/opt/local/maven/public/</url>
                 </repository>
                 <snapshotRepository>
                         <id>link-repository</id>
                         <name>Linkit Snapshots Repository</name>
-                        <url>scpexe://maven.openspcoop.org/var/maven2/repositories/snapshots/</url>
+                        <url>scpexe://poli-dev.link.it/opt/local/maven/snapshots/</url>
                 </snapshotRepository>
         </distributionManagement>
 
