@@ -51,6 +51,7 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
 
 {{#operations}}
 {{#operation}}
+{{#contents}}
     {{#summary}}
     /**
      * {{summary}}
@@ -86,6 +87,7 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
 		}
     }
     
+{{/contents}}
 {{/operation}}
 }
 {{/operations}}
