@@ -2102,6 +2102,27 @@ public abstract class DefaultCodegenConfig implements CodegenConfig {
                 if (StringUtils.isNotBlank(param.get$ref())) {
                     param = getParameterFromRef(param.get$ref(), openAPI);
                 }
+
+		// Fix: francesco scarlato per annotazioni @Valid e altro su parametri nel path definiti tramite $Ref
+                String schemaName = null;
+                Schema schema = param.getSchema();
+                if (StringUtils.isNotBlank(schema.get$ref())) {
+		    //System.out.println("REF ["+schema.get$ref()+"]");
+                    schemaName = OpenAPIUtil.getSimpleRef(schema.get$ref());
+		    if(schemaName!=null){
+		        //System.out.println("SCHEMA NAME ["+schemaName+"]");
+		        Schema schemaP = schemas.get(schemaName);
+		        if(schemaP!=null){
+		            //System.out.println("SCHEMA GET ["+schemaP+"]");
+                            //System.out.println("SCHEMA ENUM ["+schemaP.getEnum()+"]");
+                            if(schemaP.getEnum()==null || schemaP.getEnum().isEmpty()){
+                               param.setSchema(schemaP);
+                            }
+		        }
+		    }
+                } 
+		// Fine-Fix
+
                 CodegenParameter codegenParameter = fromParameter(param, imports);
                 // rename parameters to make sure all of them have unique names
                 if (ensureUniqueParams) {
