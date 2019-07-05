@@ -91,6 +91,11 @@ public abstract class AbstractJavaJAXRSServerCodegen extends AbstractJavaCodegen
 
     @Override
     public void preprocessOpenAPI(OpenAPI openAPI) {
+
+	// fix, per evitare nullPointer
+	this.openAPI = openAPI;
+	// fix, per evitare nullPointer
+
         //this.openAPIUtil = new OpenAPIUtil(openAPI);
         if (!this.additionalProperties.containsKey("serverPort")) {
             final URL urlInfo = URLPathUtil.getServerURL(openAPI);
