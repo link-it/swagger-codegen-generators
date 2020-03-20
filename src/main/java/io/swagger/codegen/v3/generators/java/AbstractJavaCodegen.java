@@ -17,6 +17,7 @@ import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.NumberSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -34,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static io.swagger.codegen.v3.CodegenConstants.HAS_ENUMS_EXT_NAME;
@@ -375,12 +377,13 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
         } else {
             importMapping.put("Schema", "io.swagger.v3.oas.annotations.media.Schema");
         }
-        
+
         importMapping.put("JsonProperty", "com.fasterxml.jackson.annotation.JsonProperty");
         importMapping.put("JsonSubTypes", "com.fasterxml.jackson.annotation.JsonSubTypes");
         importMapping.put("JsonTypeInfo", "com.fasterxml.jackson.annotation.JsonTypeInfo");
         importMapping.put("JsonCreator", "com.fasterxml.jackson.annotation.JsonCreator");
         importMapping.put("JsonValue", "com.fasterxml.jackson.annotation.JsonValue");
+        importMapping.put("JsonTypeId", "com.fasterxml.jackson.annotation.JsonTypeId");
         importMapping.put("SerializedName", "com.google.gson.annotations.SerializedName");
         importMapping.put("TypeAdapter", "com.google.gson.TypeAdapter");
         importMapping.put("JsonAdapter", "com.google.gson.annotations.JsonAdapter");
@@ -396,7 +399,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
         if(additionalProperties.containsKey(JAVA8_MODE)) {
             setJava8Mode(Boolean.parseBoolean(additionalProperties.get(JAVA8_MODE).toString()));
             if ( java8Mode ) {
-                additionalProperties.put("java8", "true");
+                additionalProperties.put("java8", true);
             }
         }
 
@@ -425,7 +428,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
             importMapping.put("LocalDate", "org.joda.time.LocalDate");
             importMapping.put("DateTime", "org.joda.time.DateTime");
         } else if (dateLibrary.startsWith("java8")) {
-            additionalProperties.put("java8", "true");
+            additionalProperties.put("java8", true);
             additionalProperties.put("jsr310", "true");
             typeMapping.put("date", "LocalDate");
             importMapping.put("LocalDate", "java.time.LocalDate");
@@ -437,7 +440,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
                 importMapping.put("OffsetDateTime", "java.time.OffsetDateTime");
             }
         } else if (dateLibrary.equals("legacy")) {
-            additionalProperties.put("legacyDates", "true");
+            additionalProperties.put("legacyDates", true);
         }
     }
 
@@ -597,10 +600,10 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
     public String toModelName(final String name) {
         // We need to check if import-mapping has a different model for this class, so we use it
         // instead of the auto-generated one.
-        if (importMapping.containsKey(name)) {
+
+        if (!getIgnoreImportMapping() && importMapping.containsKey(name)) {
             return importMapping.get(name);
         }
-
         final String sanitizedName = sanitizeName(name);
 
         String nameWithPrefixSuffix = sanitizedName;
@@ -653,13 +656,16 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
             }
             return String.format("%s<%s>", getSchemaType(propertySchema), getTypeDeclaration(inner));
             // return getSwaggerType(propertySchema) + "<" + getTypeDeclaration(inner) + ">";
-        } else if (propertySchema instanceof MapSchema || propertySchema.getAdditionalProperties() != null) {
+        } else if (propertySchema instanceof MapSchema && hasSchemaProperties(propertySchema)) {
             Schema inner = (Schema) propertySchema.getAdditionalProperties();
             if (inner == null) {
                 LOGGER.warn(propertySchema.getName() + "(map property) does not have a proper inner type defined");
                 // TODO maybe better defaulting to StringProperty than returning null
                 return null;
             }
+            return getSchemaType(propertySchema) + "<String, " + getTypeDeclaration(inner) + ">";
+        } else if (propertySchema instanceof MapSchema && hasTrueAdditionalProperties(propertySchema)) {
+            Schema inner = new ObjectSchema();
             return getSchemaType(propertySchema) + "<String, " + getTypeDeclaration(inner) + ">";
         }
         return super.getTypeDeclaration(propertySchema);
@@ -697,7 +703,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
             }
 
             return String.format(pattern, typeDeclaration);
-        } else if (schema instanceof MapSchema) {
+        } else if (schema instanceof MapSchema && hasSchemaProperties(schema)) {
             final String pattern;
             if (fullJavaUtil) {
                 pattern = "new java.util.HashMap<%s>()";
@@ -709,6 +715,27 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
             }
 
             String typeDeclaration = String.format("String, %s", getTypeDeclaration((Schema) schema.getAdditionalProperties()));
+            Object java8obj = additionalProperties.get("java8");
+            if (java8obj != null) {
+                Boolean java8 = Boolean.valueOf(java8obj.toString());
+                if (java8 != null && java8) {
+                    typeDeclaration = "";
+                }
+            }
+
+            return String.format(pattern, typeDeclaration);
+        } else if (schema instanceof MapSchema && hasTrueAdditionalProperties(schema)) {
+            final String pattern;
+            if (fullJavaUtil) {
+                pattern = "new java.util.HashMap<%s>()";
+            } else {
+                pattern = "new HashMap<%s>()";
+            }
+            if (schema.getAdditionalProperties() == null) {
+                return null;
+            }
+            Schema inner = new ObjectSchema();
+            String typeDeclaration = String.format("String, %s", getTypeDeclaration(inner));
             Object java8obj = additionalProperties.get("java8");
             if (java8obj != null) {
                 Boolean java8 = Boolean.valueOf(java8obj.toString());
@@ -919,6 +946,12 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
                 model.imports.add("Schema");
             }
         }
+        if (model.discriminator != null && model.discriminator.getPropertyName().equals(property.baseName)) {
+            property.vendorExtensions.put("x-is-discriminator-property", true);
+            if (additionalProperties.containsKey("jackson")) {
+                model.imports.add("JsonTypeId");
+            }
+        }
     }
 
     @Override
@@ -1106,16 +1139,17 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
                 .replaceAll("\\(", "_")
                 .replaceAll("\\)", StringUtils.EMPTY)
                 .replaceAll("\\.", "_")
+                .replaceAll("@", "_at_")
                 .replaceAll("-", "_")
                 .replaceAll(" ", "_");
 
         // remove everything else other than word, number and _
         // $php_variable => php_variable
         if (allowUnicodeIdentifiers) { //could be converted to a single line with ?: operator
-            name = Pattern.compile("\\W-[\\$]", Pattern.UNICODE_CHARACTER_CLASS).matcher(name).replaceAll(StringUtils.EMPTY);
+            name = Pattern.compile("[\\W&&[^$]]", Pattern.UNICODE_CHARACTER_CLASS).matcher(name).replaceAll(StringUtils.EMPTY);
         }
         else {
-            name = name.replaceAll("\\W-[\\$]", StringUtils.EMPTY);
+            name = name.replaceAll("[\\W&&[^$]]", StringUtils.EMPTY);
         }
         return name;
     }
@@ -1149,7 +1183,12 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
                 while (iterator.hasNext()) {
                     CodegenProperty codegenProperty = iterator.next();
                     isEnum = getBooleanValue(codegenProperty, IS_ENUM_EXT_NAME);
-                    if (isEnum && codegenProperty.equals(parentModelCodegenPropery)) {
+                    // we don't check for the full set of properties as they could be overridden
+                    // e.g. in the child; if we used codegenProperty.equals, the result in this
+                    // case would be `false` resulting on 2 different enums created on parent and
+                    // child classes, used in same method. This means that the child class will use
+                    // the enum defined in the parent, loosing any overridden property
+                    if (isEnum && isSameEnum(codegenProperty, parentModelCodegenPropery)) {
                         // We found an enum in the child class that is
                         // a duplicate of the one in the parent, so remove it.
                         iterator.remove();
@@ -1166,11 +1205,48 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
                 count += 1;
                 codegenProperty.getVendorExtensions().put(CodegenConstants.HAS_MORE_EXT_NAME, (count < numVars) ? true : false);
             }
+
+            if (!codegenProperties.isEmpty()) {
+                codegenModel.getVendorExtensions().put(CodegenConstants.HAS_VARS_EXT_NAME, true);
+                codegenModel.getVendorExtensions().put(CodegenConstants.HAS_ENUMS_EXT_NAME, false);
+            } else {
+                codegenModel.emptyVars = true;
+                codegenModel.getVendorExtensions().put(CodegenConstants.HAS_VARS_EXT_NAME, false);
+                codegenModel.getVendorExtensions().put(CodegenConstants.HAS_ENUMS_EXT_NAME, false);
+            }
+
+
             codegenModel.vars = codegenProperties;
         }
         return codegenModel;
+
+
     }
 
+    protected static boolean isSameEnum(CodegenProperty actual, CodegenProperty other) {
+        if (actual == null && other == null) {
+            return true;
+        }
+        if ((actual.name == null) ? (other.name != null) : !actual.name.equals(other.name)) {
+            return false;
+        }
+        if ((actual.baseName == null) ? (other.baseName != null) : !actual.baseName.equals(other.baseName)) {
+            return false;
+        }
+        if ((actual.datatype == null) ? (other.datatype != null) : !actual.datatype.equals(other.datatype)) {
+            return false;
+        }
+        if ((actual.datatypeWithEnum == null) ? (other.datatypeWithEnum != null) : !actual.datatypeWithEnum.equals(other.datatypeWithEnum)) {
+            return false;
+        }
+        if ((actual.baseType == null) ? (other.baseType != null) : !actual.baseType.equals(other.baseType)) {
+            return false;
+        }
+        if (!Objects.equals(actual.enumName, other.enumName)) {
+            return false;
+        }
+        return true;
+    }
     private static String sanitizePackageName(String packageName) {
         packageName = packageName.trim(); // FIXME: a parameter should not be assigned. Also declare the methods parameters as 'final'.
         packageName = packageName.replaceAll("[^a-zA-Z0-9_\\.]", "_");
@@ -1314,7 +1390,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
     public void setSupportJava6(boolean value) {
         this.supportJava6 = value;
     }
-    
+
     public String toRegularExpression(String pattern) {
         return escapeText(pattern);
     }
@@ -1370,7 +1446,12 @@ public abstract class AbstractJavaCodegen extends DefaultCodegenConfig {
                         .value(Boolean.FALSE.toString()));
             }
         }
-        
+
         super.setLanguageArguments(languageArguments);
+    }
+
+    @Override
+    public boolean defaultIgnoreImportMappingOption() {
+        return true;
     }
 }

@@ -91,12 +91,13 @@ public abstract class AbstractJavaJAXRSServerCodegen extends AbstractJavaCodegen
 
     @Override
     public void preprocessOpenAPI(OpenAPI openAPI) {
-        this.openAPIUtil = new OpenAPIUtil(openAPI);
+        //this.openAPIUtil = new OpenAPIUtil(openAPI);
+        this.openAPI = openAPI;
         if (!this.additionalProperties.containsKey("serverPort")) {
             final URL urlInfo = URLPathUtil.getServerURL(openAPI);
             String port = "8080"; // Default value for a JEE Server
-            if ( urlInfo != null && urlInfo.getPort() != 0) {
-                port = String.valueOf(urlInfo.getPort());
+            if ( urlInfo != null && urlInfo.getPort() > 0) {
+                    port = String.valueOf(urlInfo.getPort());
             }
             this.additionalProperties.put("serverPort", port);
         }

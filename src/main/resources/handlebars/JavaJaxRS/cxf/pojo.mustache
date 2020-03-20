@@ -33,7 +33,7 @@ import javax.validation.Valid;
  **/
 {{#useOas2}}@ApiModel{{/useOas2}}{{^useOas2}}@Schema{{/useOas2}}(description="{{{description}}}")
 {{/description}}
-public class {{classname}} {{#vendorExtensions.x-java-is-problem}}extends {{{vendorExtensions.x-java-problem-parent}}} {{/vendorExtensions.x-java-is-problem}}{{^vendorExtensions.x-java-is-problem}}{{#parent}}extends {{{parent}}}{{/parent}} {{/vendorExtensions.x-java-is-problem}}{
+public class {{classname}} {{#vendorExtensions.x-java-is-problem}}extends {{{vendorExtensions.x-java-problem-parent}}} {{/vendorExtensions.x-java-is-problem}}{{^vendorExtensions.x-java-is-problem}}{{#parent}}extends {{{parent}}}{{/parent}} {{/vendorExtensions.x-java-is-problem}}{{#interfaceModels}}{{#@first}}implements {{/@first}}{{classname}}{{^@last}}, {{/@last}}{{#@last}} {{/@last}}{{/interfaceModels}}{
 {{^vendorExtensions.x-java-is-problem-primitive-type}}
   {{#vars}}{{#baseItems this}}{{#is this 'enum'}}
 {{>modelInnerEnum}}{{/is~}}{{/baseItems}}
@@ -42,6 +42,15 @@ public class {{classname}} {{#vendorExtensions.x-java-is-problem}}extends {{{ven
 {{/withXml}}
   {{#useOas2}}@ApiModelProperty({{#example}}example = "{{{example}}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}"){{/useOas2}}
   {{^useOas2}}@Schema({{#example}}example = "{{{example}}}", {{/example}}{{#required}}required = {{required}}, {{/required}}description = "{{{description}}}"){{/useOas2}}
+{{#vendorExtensions.x-is-oneof}}  @com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, include = com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "{{vendorExtensions.x-discriminator-name}}", visible = true )
+  @com.fasterxml.jackson.annotation.JsonSubTypes({
+    {{#vendorExtensions.x-discriminator-list}}
+    @com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = {{{x-discriminator-class}}}.class, name = "{{{x-discriminator-value}}}"){{^@last}},
+    {{/@last}}{{#@last}}
+    {{/@last}}
+    {{/vendorExtensions.x-discriminator-list}}
+  })
+{{/vendorExtensions.x-is-oneof}}
 {{#description}}
  /**
    * {{{description}}}  

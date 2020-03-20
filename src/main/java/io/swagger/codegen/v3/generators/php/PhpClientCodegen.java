@@ -5,6 +5,7 @@ import io.swagger.codegen.v3.CodegenConstants;
 import io.swagger.codegen.v3.CodegenOperation;
 import io.swagger.codegen.v3.CodegenParameter;
 import io.swagger.codegen.v3.CodegenProperty;
+import io.swagger.codegen.v3.CodegenSecurity;
 import io.swagger.codegen.v3.CodegenType;
 import io.swagger.codegen.v3.SupportingFile;
 import io.swagger.codegen.v3.generators.DefaultCodegenConfig;
@@ -20,6 +21,7 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 
 import io.swagger.v3.oas.models.media.*;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
 import org.apache.commons.lang3.StringUtils;
 
@@ -128,6 +130,7 @@ public class PhpClientCodegen extends DefaultCodegenConfig {
         typeMapping.put("object", "object");
         typeMapping.put("binary", "string");
         typeMapping.put("ByteArray", "string");
+        typeMapping.put("BigDecimal", "float");
         typeMapping.put("UUID", "string");
 
         cliOptions.add(new CliOption(CodegenConstants.MODEL_PACKAGE, CodegenConstants.MODEL_PACKAGE_DESC));
@@ -370,13 +373,16 @@ public class PhpClientCodegen extends DefaultCodegenConfig {
                 return "";
             }
             return getTypeDeclaration(inner) + "[]";
-        } else if (propertySchema instanceof MapSchema) {
+        } else if (propertySchema instanceof MapSchema  && hasSchemaProperties(propertySchema)) {
             MapSchema mapSchema = (MapSchema) propertySchema;
             Schema inner = (Schema) mapSchema.getAdditionalProperties();
             if (inner == null) {
                 LOGGER.warn(propertySchema.getName() + "(map property) does not have a proper inner type defined");
                 return "";
             }
+            return getSchemaType(propertySchema) + "[string," + getTypeDeclaration(inner) + "]";
+        } else if (propertySchema instanceof MapSchema && hasTrueAdditionalProperties(propertySchema)) {
+            Schema inner = new ObjectSchema();
             return getSchemaType(propertySchema) + "[string," + getTypeDeclaration(inner) + "]";
         } else if (StringUtils.isNotBlank(propertySchema.get$ref())) {
             String type = super.getTypeDeclaration(propertySchema);
@@ -745,6 +751,19 @@ public class PhpClientCodegen extends DefaultCodegenConfig {
     @Override
     public String escapeUnsafeCharacters(String input) {
         return input.replace("*/", "*_/").replace("/*", "/_*");
+    }
+
+    @Override
+    public List<CodegenSecurity> fromSecurity(Map<String, SecurityScheme> securitySchemeMap) {
+        final List<CodegenSecurity> securities = super.fromSecurity(securitySchemeMap);
+        securities.forEach(codegenSecurity -> {
+            final Map<String, Object> extensions = codegenSecurity.getVendorExtensions();
+            if (extensions != null && extensions.containsKey("x-token-example")) {
+                additionalProperties.put("x-token-example", extensions.get("x-token-example"));
+                return;
+            }
+        });
+        return securities;
     }
 
 }

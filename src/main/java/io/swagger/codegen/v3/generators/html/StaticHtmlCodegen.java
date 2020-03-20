@@ -8,13 +8,16 @@ import io.swagger.codegen.v3.CodegenParameter;
 import io.swagger.codegen.v3.CodegenProperty;
 import io.swagger.codegen.v3.CodegenResponse;
 import io.swagger.codegen.v3.CodegenType;
+import io.swagger.codegen.v3.ISchemaHandler;
 import io.swagger.codegen.v3.SupportingFile;
 import io.swagger.codegen.v3.generators.DefaultCodegenConfig;
+import io.swagger.codegen.v3.generators.SchemaHandler;
 import io.swagger.codegen.v3.utils.Markdown;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.MapSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
@@ -105,8 +108,11 @@ public class StaticHtmlCodegen extends DefaultCodegenConfig {
             Schema inner = ((ArraySchema) propertySchema).getItems();
             return String.format("%s[%s]", getSchemaType(propertySchema), getTypeDeclaration(inner));
         }
-        else if (propertySchema instanceof MapSchema) {
+        else if (propertySchema instanceof MapSchema  && hasSchemaProperties(propertySchema)) {
             Schema inner = (Schema) propertySchema.getAdditionalProperties();
+            return String.format("%s[String, %s]", getSchemaType(propertySchema), getTypeDeclaration(inner));
+        } else if (propertySchema instanceof MapSchema && hasTrueAdditionalProperties(propertySchema)) {
+            Schema inner = new ObjectSchema();
             return String.format("%s[String, %s]", getSchemaType(propertySchema), getTypeDeclaration(inner));
         }
         return super.getTypeDeclaration(propertySchema);
@@ -151,7 +157,7 @@ public class StaticHtmlCodegen extends DefaultCodegenConfig {
 
     /**
      * Convert Markdown text to HTML
-     * 
+     *
      * @param input
      *            text in Markdown; may be null.
      * @return the text, converted to Markdown. For null input, "" is returned.
@@ -197,4 +203,8 @@ public class StaticHtmlCodegen extends DefaultCodegenConfig {
         property.unescapedDescription = toHtml(property.unescapedDescription);
     }
 
+    @Override
+    public ISchemaHandler getSchemaHandler() {
+        return new HtmlSchemaHandler(this);
+    }
 }

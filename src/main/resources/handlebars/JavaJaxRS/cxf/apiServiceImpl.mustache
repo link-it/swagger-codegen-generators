@@ -51,6 +51,7 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
 
 {{#operations}}
 {{#operation}}
+{{#contents}}
     {{#summary}}
     /**
      * {{summary}}
@@ -62,7 +63,7 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
      */
     {{/summary}}
 	@Override
-    public {{#vendorExtensions.x-java-is-response-file}}byte[]{{/vendorExtensions.x-java-is-response-file}}{{^vendorExtensions.x-java-is-response-file}}{{>returnTypes}}{{/vendorExtensions.x-java-is-response-file}} {{nickname}}({{#allParams}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{#vendorExtensions.x-has-more-parameter}}, {{/vendorExtensions.x-has-more-parameter}}{{/allParams}}) {
+    public {{#vendorExtensions.x-java-is-response-file}}byte[]{{/vendorExtensions.x-java-is-response-file}}{{^vendorExtensions.x-java-is-response-file}}{{>returnTypes}}{{/vendorExtensions.x-java-is-response-file}} {{nickname}}({{#parameters}}{{>queryParamsImpl}}{{>pathParamsImpl}}{{>headerParamsImpl}}{{>bodyParamsImpl}}{{>formParamsImpl}}{{#vendorExtensions.x-has-more-parameter}}, {{/vendorExtensions.x-has-more-parameter}}{{#hasMore}}, {{/hasMore}}{{/parameters}}) {
 		IContext context = this.getContext();
 		try {
 			context.getLogger().info("Invocazione in corso ...");     
@@ -86,6 +87,7 @@ public class {{classname}}ServiceImpl extends BaseImpl implements {{classname}} 
 		}
     }
     
+{{/contents}}
 {{/operation}}
 }
 {{/operations}}

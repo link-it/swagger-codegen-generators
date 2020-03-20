@@ -4,12 +4,16 @@ import com.google.common.collect.Sets;
 import io.swagger.codegen.v3.CodegenConstants;
 import io.swagger.codegen.v3.CodegenModel;
 import io.swagger.codegen.v3.CodegenProperty;
+import io.swagger.codegen.v3.generators.AbstractCodegenTest;
 import io.swagger.codegen.v3.generators.DefaultCodegenConfig;
 import io.swagger.codegen.v3.generators.typescript.TypeScriptAngularClientCodegen;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.DateSchema;
 import io.swagger.v3.oas.models.media.DateTimeSchema;
 import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
@@ -19,7 +23,7 @@ import org.testng.annotations.Test;
 import static io.swagger.codegen.v3.generators.handlebars.ExtensionHelper.getBooleanValue;
 
 @SuppressWarnings("static-method")
-public class TypeScriptAngularModelTest {
+public class TypeScriptAngularModelTest /**extends AbstractCodegenTest*/ {
 
     @Test(description = "convert a simple TypeScript Angular model")
     public void simpleModelTest() {
@@ -124,6 +128,7 @@ public class TypeScriptAngularModelTest {
                 .description("a sample model")
                 .addProperties("children", new Schema().$ref("#/components/schemas/Children"));
         final DefaultCodegenConfig codegen = new TypeScriptAngularClientCodegen();
+        codegen.preprocessOpenAPI(new OpenAPI().components(new Components()));
         final CodegenModel cm = codegen.fromModel("sample", model);
 
         Assert.assertEquals(cm.name, "sample");
@@ -148,6 +153,7 @@ public class TypeScriptAngularModelTest {
                 .addProperties("children", new ArraySchema()
                         .items(new Schema().$ref("#/components/schemas/Children")));
         final DefaultCodegenConfig codegen = new TypeScriptAngularClientCodegen();
+        codegen.preprocessOpenAPI(new OpenAPI().components(new Components()));
         final CodegenModel cm = codegen.fromModel("sample", model);
 
         Assert.assertEquals(cm.name, "sample");
@@ -171,6 +177,8 @@ public class TypeScriptAngularModelTest {
                 .items(new Schema().$ref("#/components/schemas/Children"))
                 .description("an array model");
         final DefaultCodegenConfig codegen = new TypeScriptAngularClientCodegen();
+        codegen.preprocessOpenAPI(new OpenAPI().components(new Components()));
+
         final CodegenModel cm = codegen.fromModel("sample", model);
 
         Assert.assertEquals(cm.name, "sample");
@@ -181,10 +189,11 @@ public class TypeScriptAngularModelTest {
 
     @Test(description = "convert a map model")
     public void mapModelTest() {
-        final Schema model = new Schema()
+        final Schema model = new MapSchema()
                 .description("a map model")
                 .additionalProperties(new Schema().$ref("#/components/schemas/Children"));
         final DefaultCodegenConfig codegen = new TypeScriptAngularClientCodegen();
+        codegen.preprocessOpenAPI(new OpenAPI().components(new Components()));
         final CodegenModel cm = codegen.fromModel("sample", model);
 
         Assert.assertEquals(cm.name, "sample");
