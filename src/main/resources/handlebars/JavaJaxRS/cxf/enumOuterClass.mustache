@@ -15,7 +15,7 @@ import javax.xml.bind.annotation.XmlEnumValue;
 @XmlType(name="{{classname}}")
 @XmlEnum({{dataType}}.class)
 {{/if~}}
-public enum {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{{classname}}}{{/datatypeWithEnum}} {
+public enum {{#datatypeWithEnum}}{{{.}}}{{/datatypeWithEnum}}{{^datatypeWithEnum}}{{{classname}}}{{/datatypeWithEnum}} {{#interfaceModels}}{{#@first}}implements {{/@first}}{{classname}}{{^@last}}, {{/@last}}{{#@last}} {{/@last}}{{/interfaceModels}}{
   {{#if gson}}
   {{#allowableValues}}{{#enumVars}}
   @SerializedName({{#is ../../this 'integer'}}"{{/is}}{{#is ../../this 'double'}}"{{/is}}{{#is ../../this 'long'}}"{{/is}}{{#is ../../this 'float'}}"{{/is}}{{{value}}}{{#is ../../this 'integer'}}"{{/is}}{{#is ../../this 'double'}}"{{/is}}{{#is ../../this 'long'}}"{{/is}}{{#is ../../this 'float'}}"{{/is}})

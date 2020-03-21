@@ -1,6 +1,6 @@
 @XmlType(name="{{datatypeWithEnum}}")
 @XmlEnum({{datatype}}.class)
-public enum {{datatypeWithEnum}} {
+public enum {{datatypeWithEnum}} {{#interfaceModels}}{{#@first}}implements {{/@first}}{{classname}}{{^@last}}, {{/@last}}{{#@last}} {{/@last}}{{/interfaceModels}}{
 
     {{#allowableValues}}
 {{#enumVars}}@XmlEnumValue({{#is ../../this 'integer'}}"{{/is}}{{#is ../../this 'double'}}"{{/is}}{{#is ../../this 'long'}}"{{/is}}{{#is ../../this 'float'}}"{{/is}}{{{value}}}{{#is ../../this 'integer'}}"{{/is}}{{#is ../../this 'double'}}"{{/is}}{{#is ../../this 'long'}}"{{/is}}{{#is ../../this 'float'}}"{{/is}}) {{name}}({{datatype}}.valueOf({{{value}}})){{^@last}}, {{/@last}}{{#@last}};{{/@last}}{{/enumVars}}
