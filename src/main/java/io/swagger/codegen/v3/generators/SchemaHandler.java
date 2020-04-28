@@ -139,6 +139,8 @@ public class SchemaHandler implements ISchemaHandler {
 				if(property!=null && property instanceof ComposedSchema){
 					ComposedSchema composedPropertySchema = (ComposedSchema) property;
 
+					java.io.File fInterface = null;
+
 					List<Schema> propertySchemas = composedPropertySchema.getOneOf();
 					CodegenModel composedPropertyModel = this.createComposedModel(ONE_OF_PREFFIX + codegenPropertyName, propertySchemas);
 					if(composedPropertyModel!=null){
@@ -155,9 +157,9 @@ public class SchemaHandler implements ISchemaHandler {
 						bf.append("\n");
 						bf.append("}");
 						try{
-							java.io.File f = new java.io.File(this.codegenConfig.modelFileFolder(),composedPropertyModel.getName()+".java");
-							mkdirParentDirectory(f);
-							java.io.FileOutputStream fos =new java.io.FileOutputStream(f);
+							fInterface = new java.io.File(this.codegenConfig.modelFileFolder(),composedPropertyModel.getName()+".java");
+							mkdirParentDirectory(fInterface);
+							java.io.FileOutputStream fos =new java.io.FileOutputStream(fInterface);
 							fos.write(bf.toString().getBytes());
 							fos.flush();
 							fos.close();
@@ -181,7 +183,17 @@ public class SchemaHandler implements ISchemaHandler {
 					
 					if (composedPropertySchema.getDiscriminator() != null) {
 					    System.out.println("'processComposedSchemas' codegenModel composed ["+codegenModel.getName()+"] schema '"+schema.getName()+"' codegenProperty '"+codegenProperty.name+"' discriminator '"+composedPropertySchema.getDiscriminator().getPropertyName()+"'");
-					    codegenProperty.vendorExtensions.put("x-discriminator-name", composedPropertySchema.getDiscriminator().getPropertyName());
+					    codegenProperty.vendorExtensions.put("x-discriminator-enable", true);
+					    String discriminatorName = composedPropertySchema.getDiscriminator().getPropertyName();
+					    boolean externalDiscriminator = discriminatorName.startsWith("x-external-property-");
+					    if(externalDiscriminator){
+						discriminatorName = discriminatorName.substring("x-external-property-".length());
+					    }
+					    codegenProperty.vendorExtensions.put("x-discriminator-existing-property", !externalDiscriminator);
+					    codegenProperty.vendorExtensions.put("x-discriminator-external-property", externalDiscriminator);
+					    codegenProperty.vendorExtensions.put("x-discriminator-name", discriminatorName);
+
+					    String classDiscriminator = null;
 	    				    Map<String, String> map = composedPropertySchema.getDiscriminator().getMapping();
 					    if(map!=null && !map.isEmpty()){
 						List<Map<String, String>> enumVars = new ArrayList<Map<String, String>>();
@@ -197,9 +209,62 @@ public class SchemaHandler implements ISchemaHandler {
 						    Map<String, String> enumVar = new java.util.HashMap<String, String>();
 						    enumVar.put("x-discriminator-value", key);
 					    	    enumVar.put("x-discriminator-class", valueWithoutSchema);
+						    if(classDiscriminator==null){
+						    	classDiscriminator = valueWithoutSchema;
+						    }
 						    enumVars.add(enumVar);
 						}
 						codegenProperty.vendorExtensions.put("x-discriminator-list", enumVars);
+					    }
+
+					    if(!externalDiscriminator){
+					    	String nomeMetodoExistingProperty = "get"+((discriminatorName.charAt(0)+"").toUpperCase())+discriminatorName.substring(1);
+						codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-name", nomeMetodoExistingProperty);
+
+						if(classDiscriminator!=null && allModels.containsKey(classDiscriminator)){
+							CodegenModel codegenModelDiscriminatorType = allModels.get(classDiscriminator);
+							final String discriminatorNameSearch = discriminatorName;
+							final Optional<CodegenProperty> optionalCodegenPropertyDiscriminator = codegenModelDiscriminatorType.getVars()
+							   .stream()
+							   .filter(codegenPropertyDiscriminator -> codegenPropertyDiscriminator.baseName.equals(discriminatorNameSearch))
+							   .findFirst();
+							if (optionalCodegenPropertyDiscriminator.isPresent()) {
+						    		final CodegenProperty codegenPropertyDiscriminator = optionalCodegenPropertyDiscriminator.get();
+								System.out.println("'processComposedSchemas' classDiscriminator ["+classDiscriminator+"] schema '"+schema.getName()+"' codegenProperty '"+codegenPropertyDiscriminator.name+"' ["+codegenPropertyDiscriminator.datatypeWithEnum+"] ["+codegenPropertyDiscriminator.datatype+"]");
+								codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", codegenPropertyDiscriminator.datatype);
+							}
+							else{
+								codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", "String");
+							}
+						}
+						else{
+							codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", "String");
+						}
+
+						if(fInterface!=null){
+							StringBuilder bf = new StringBuilder();
+							bf.append("package ").append(this.codegenConfig.modelPackage()).append(";\n\n");
+							bf.append("/**\n");
+							bf.append("* ").append(composedPropertyModel.getName()).append("\n");
+							bf.append("*/\n");
+							bf.append("public interface ").append(composedPropertyModel.getName()).append(" {\n");
+							bf.append("    public ");
+							bf.append(codegenProperty.vendorExtensions.get("x-discriminator-existing-property-method-type"));
+							bf.append(" ");
+							bf.append(codegenProperty.vendorExtensions.get("x-discriminator-existing-property-method-name"));
+							bf.append("();");
+							bf.append("\n");
+							bf.append("}");
+							try{
+								java.io.FileOutputStream fos =new java.io.FileOutputStream(fInterface);
+								fos.write(bf.toString().getBytes());
+								fos.flush();
+								fos.close();
+							}catch(Exception e){
+								System.out.println("'processComposedSchema' codegenModel composed ["+codegenModel.getName()+"] schema '"+schema.getName()+"' codegenProperty '"+codegenProperty.name+"' Registered new interface '"+composedPropertyModel.getName()+"' ERROR [outputDir:"+this.codegenConfig.modelFileFolder()+"]: "+e.getMessage());
+								e.printStackTrace(System.out);
+							}	
+						}
 					    }
 					}
 				}
@@ -275,6 +340,57 @@ public class SchemaHandler implements ISchemaHandler {
 	else{
 	    System.out.println("'processComposedSchema' Property ["+codegenProperty.name+"] is oneOf");
 	}
+
+	if (composedSchema.getDiscriminator() != null) {
+            System.out.println("'processComposedSchema' Property ["+codegenProperty.name+"] discriminator '"+composedSchema.getDiscriminator().getPropertyName()+"' before add Interfaces");
+	    String discriminatorName = composedSchema.getDiscriminator().getPropertyName();
+	    boolean externalDiscriminator = discriminatorName.startsWith("x-external-property-");
+	    if(!externalDiscriminator){
+		codegenProperty.vendorExtensions.put("x-discriminator-existing-property", !externalDiscriminator);
+		String nomeMetodoExistingProperty = "get"+((discriminatorName.charAt(0)+"").toUpperCase())+discriminatorName.substring(1);
+		codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-name", nomeMetodoExistingProperty);
+
+	    	String classDiscriminator = null;
+	    	Map<String, String> map = composedSchema.getDiscriminator().getMapping();
+            	if(map!=null && !map.isEmpty()){
+			List<Map<String, String>> enumVars = new ArrayList<Map<String, String>>();
+			for (String key : map.keySet()) {
+	            		String value = map.get(key);
+		    		String schemasDecl = "components/schemas/";
+		    		String valueWithoutSchema = value; 
+	    	    		if(value.contains(schemasDecl)) {
+	    				int indexOf = value.indexOf(schemasDecl);
+	    				valueWithoutSchema = value.substring(indexOf+schemasDecl.length());
+	    	    		}
+		    		System.out.println("'processComposedSchema' Property ["+codegenProperty.name+"] discriminator '"+composedSchema.getDiscriminator().getPropertyName()+"' key["+key+"] value["+map.get(key)+"] valueWithoutSchema["+valueWithoutSchema+"] before add Interfaces");
+	    	    		if(classDiscriminator==null){
+		    			classDiscriminator = valueWithoutSchema;
+		    		}
+	        	}
+	    	}
+
+		if(classDiscriminator!=null && allModels.containsKey(classDiscriminator)){
+			CodegenModel codegenModelDiscriminatorType = allModels.get(classDiscriminator);
+			final String discriminatorNameSearch = discriminatorName;
+			final Optional<CodegenProperty> optionalCodegenPropertyDiscriminator = codegenModelDiscriminatorType.getVars()
+			   .stream()
+			   .filter(codegenPropertyDiscriminator -> codegenPropertyDiscriminator.baseName.equals(discriminatorNameSearch))
+			   .findFirst();
+			if (optionalCodegenPropertyDiscriminator.isPresent()) {
+		    		final CodegenProperty codegenPropertyDiscriminator = optionalCodegenPropertyDiscriminator.get();
+				System.out.println("'processComposedSchemas' classDiscriminator ["+classDiscriminator+"] codegenProperty '"+codegenPropertyDiscriminator.name+"' ["+codegenPropertyDiscriminator.datatypeWithEnum+"] ["+codegenPropertyDiscriminator.datatype+"]");
+				codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", codegenPropertyDiscriminator.datatype);
+			}
+			else{
+				codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", "String");	
+			}
+		}
+		else{
+			codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", "String");
+		}
+	    }
+	}
+
         this.addInterfaces(schemas, composedModel, allModels);
 
         codegenProperty.datatype = composedModel.getClassname();
@@ -289,7 +405,17 @@ public class SchemaHandler implements ISchemaHandler {
 	}
         if (composedSchema.getDiscriminator() != null) {
             System.out.println("'processComposedSchema' Property ["+codegenProperty.name+"] discriminator '"+composedSchema.getDiscriminator().getPropertyName()+"'");
-	    codegenProperty.vendorExtensions.put("x-discriminator-name", composedSchema.getDiscriminator().getPropertyName());
+	    codegenProperty.vendorExtensions.put("x-discriminator-enable", true);
+	    String discriminatorName = composedSchema.getDiscriminator().getPropertyName();
+	    boolean externalDiscriminator = discriminatorName.startsWith("x-external-property-");
+	    if(externalDiscriminator){
+		discriminatorName = discriminatorName.substring("x-external-property-".length());
+	    }
+	    codegenProperty.vendorExtensions.put("x-discriminator-existing-property", !externalDiscriminator);
+	    codegenProperty.vendorExtensions.put("x-discriminator-external-property", externalDiscriminator);
+	    codegenProperty.vendorExtensions.put("x-discriminator-name", discriminatorName);
+
+	    String classDiscriminator = null;
 	    Map<String, String> map = composedSchema.getDiscriminator().getMapping();
             if(map!=null && !map.isEmpty()){
 		List<Map<String, String>> enumVars = new ArrayList<Map<String, String>>();
@@ -305,9 +431,36 @@ public class SchemaHandler implements ISchemaHandler {
 	    	    Map<String, String> enumVar = new java.util.HashMap<String, String>();
 		    enumVar.put("x-discriminator-value", key);
             	    enumVar.put("x-discriminator-class", valueWithoutSchema);
+		    if(classDiscriminator!=null){
+		    	classDiscriminator = valueWithoutSchema;
+		    }
 		    enumVars.add(enumVar);
 	        }
 		codegenProperty.vendorExtensions.put("x-discriminator-list", enumVars);
+	    }
+
+	    if(!externalDiscriminator){
+	    	String nomeMetodoExistingProperty = "get"+((discriminatorName.charAt(0)+"").toUpperCase())+discriminatorName.substring(1);
+		codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-name", nomeMetodoExistingProperty);
+		if(classDiscriminator!=null && allModels.containsKey(classDiscriminator)){
+			CodegenModel codegenModelDiscriminatorType = allModels.get(classDiscriminator);
+			final String discriminatorNameSearch = discriminatorName;
+			final Optional<CodegenProperty> optionalCodegenPropertyDiscriminator = codegenModelDiscriminatorType.getVars()
+			   .stream()
+			   .filter(codegenPropertyDiscriminator -> codegenPropertyDiscriminator.baseName.equals(discriminatorNameSearch))
+			   .findFirst();
+			if (optionalCodegenPropertyDiscriminator.isPresent()) {
+		    		final CodegenProperty codegenPropertyDiscriminator = optionalCodegenPropertyDiscriminator.get();
+				System.out.println("'processComposedSchemas' classDiscriminator ["+classDiscriminator+"] codegenProperty '"+codegenPropertyDiscriminator.name+"' ["+codegenPropertyDiscriminator.datatypeWithEnum+"] ["+codegenPropertyDiscriminator.datatype+"]");
+				codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", codegenPropertyDiscriminator.datatype);
+			}
+			else{
+				codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", "String");	
+			}
+		}
+		else{
+			codegenProperty.vendorExtensions.put("x-discriminator-existing-property-method-type", "String");
+		}
 	    }
         }
 

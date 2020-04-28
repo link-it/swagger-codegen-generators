@@ -42,7 +42,7 @@ public class {{classname}} {{#vendorExtensions.x-java-is-problem}}extends {{{ven
 {{/withXml}}
   {{#useOas2}}@ApiModelProperty({{#example}}example = "{{{example}}}", {{/example}}{{#required}}required = {{required}}, {{/required}}value = "{{{description}}}"){{/useOas2}}
   {{^useOas2}}@Schema({{#example}}example = "{{{example}}}", {{/example}}{{#required}}required = {{required}}, {{/required}}description = "{{{description}}}"){{/useOas2}}
-{{#vendorExtensions.x-is-oneof}}  @com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, include = com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "{{vendorExtensions.x-discriminator-name}}", visible = true )
+{{#vendorExtensions.x-is-oneof}}{{#vendorExtensions.x-discriminator-enable}}  @com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, include = com.fasterxml.jackson.annotation.JsonTypeInfo.As.{{#vendorExtensions.x-discriminator-external-property}}EXTERNAL{{/vendorExtensions.x-discriminator-external-property}}{{#vendorExtensions.x-discriminator-existing-property}}EXISTING{{/vendorExtensions.x-discriminator-existing-property}}_PROPERTY, property = "{{vendorExtensions.x-discriminator-name}}", visible = true )
   @com.fasterxml.jackson.annotation.JsonSubTypes({
     {{#vendorExtensions.x-discriminator-list}}
     @com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = {{{x-discriminator-class}}}.class, name = "{{{x-discriminator-value}}}"){{^@last}},
@@ -50,7 +50,7 @@ public class {{classname}} {{#vendorExtensions.x-java-is-problem}}extends {{{ven
     {{/@last}}
     {{/vendorExtensions.x-discriminator-list}}
   })
-{{/vendorExtensions.x-is-oneof}}
+{{/vendorExtensions.x-discriminator-enable}}{{/vendorExtensions.x-is-oneof}}
 {{#description}}
  /**
    * {{{description}}}  
