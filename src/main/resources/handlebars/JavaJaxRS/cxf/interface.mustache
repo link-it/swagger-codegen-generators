@@ -2,5 +2,5 @@
 * {{#description}}{{.}}{{/description}}{{^description}}{{classname}}{{/description}}
 */
 public interface {{{classname}}} {
-{{#vendorExtensions.x-discriminator-existing-property}}    public {{{x-discriminator-existing-property-method-type}}} {{{x-discriminator-existing-property-method-name}}}();{{/vendorExtensions.x-discriminator-existing-property}}
+{{#vendorExtensions.x-discriminator-existing-property}}    public {{{vendorExtensions.x-discriminator-existing-property-method-type}}} {{{vendorExtensions.x-discriminator-existing-property-method-name}}}();{{/vendorExtensions.x-discriminator-existing-property}}
 }
